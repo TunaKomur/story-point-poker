@@ -10,17 +10,20 @@ const io = new Server(server);
 app.use(express.static(path.join(__dirname, "public")));
 
 let users = []; 
-// users: [{ id, name, role: "admin" | "user", selected: null | string }]
+// users: [{ id, name, role: "admin" | "user", selectedCard: null | string }]
 
 let adminSocketId = null;
 let adminName = null;
+let revealed = false;
 
 function emitState() {
   io.emit("playersUpdate", {
+    revealed,
     players: users.map(u => ({
       name: u.name,
       role: u.role,
-      selected: u.selected
+      selected: !!u.selectedCard,           // ✅ tick için
+      selectedCard: u.selectedCard || null  // ✅ reveal sonrası sayı için
     })),
     admin: adminName ? { name: adminName } : null
   });
@@ -50,7 +53,7 @@ io.on("connection", (socket) => {
     }
 
     // kullanıcı ekle
-    users.push({ id: socket.id, name: cleanName, role: desiredRole, selected: null });
+    users.push({ id: socket.id, name: cleanName, role: desiredRole, selectedCard: null });
 
     // admin ataması
     if (desiredRole === "admin") {
@@ -65,35 +68,42 @@ io.on("connection", (socket) => {
   });
 
   socket.on("selectCard", (value) => {
-    const user = users.find(u => u.id === socket.id);
-    if (!user) return;
+  if (revealed) return; // 🔒 reveal sonrası kilit
 
-    user.selected = value;
-    emitState();
-  });
+  const user = users.find(u => u.id === socket.id);
+  if (!user) return;
+
+  user.selectedCard = value;
+  emitState();
+});
 
   // ✅ SADECE ADMIN REVEAL ATABİLİR
   socket.on("reveal", () => {
-    if (socket.id !== adminSocketId) return;
+  if (socket.id !== adminSocketId) return;
 
-    // count hesabı: seçilenleri say
-    const counts = {};
-    for (const u of users) {
-      if (u.selected != null) {
-        counts[u.selected] = (counts[u.selected] || 0) + 1;
-      }
+  revealed = true;
+
+  const counts = {};
+  for (const u of users) {
+    if (u.selectedCard != null) {
+      counts[u.selectedCard] = (counts[u.selectedCard] || 0) + 1;
     }
-    io.emit("revealResults", counts);
-  });
+  }
+
+  io.emit("revealResults", counts);
+  emitState(); // ✅ tek yerden yayın
+});
 
   // ✅ SADECE ADMIN NEW ROUND ATABİLİR
   socket.on("newRound", () => {
-    if (socket.id !== adminSocketId) return;
+  if (socket.id !== adminSocketId) return;
 
-    for (const u of users) u.selected = null;
-    io.emit("clearSelections");
-    emitState();
-  });
+  revealed = false;
+  for (const u of users) u.selectedCard = null;
+
+  io.emit("clearSelections");
+  emitState(); // ✅ tek yerden yayın
+});
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);

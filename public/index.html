@@ -57,6 +57,14 @@
   box-sizing: border-box;   /* 🔥 KRİTİK SATIR */
 }
 
+.cards.locked .card {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+.cards.locked .card:hover {
+  filter: brightness(0.95);
+}
+
 .cardsTitle {
   margin: 0 0 16px 0;    /* kartlarla araya boşluk */
   text-align: center;
@@ -105,14 +113,12 @@
   </div>
 </div>
 
-
       <!-- GAME -->
       <div id="gameScreen" class="hidden">
         <div class="cardsWrapper">
     <h2 class="cardsTitle">Choose Story Point</h2>
     <div class="cards" id="cards"></div>
     </div>
-
 
         <!-- sadece admin görecek -->
         <div class="controls" id="adminControls"></div>
@@ -144,6 +150,7 @@
     let myName = null;
     let myRole = "user";
     let adminTaken = false;
+    let revealedState = false;
 
     // kartları bas
     function renderCards(selectedValue = null) {
@@ -153,6 +160,7 @@
         el.className = "card" + (selectedValue === v ? " selected" : "");
         el.textContent = v;
         el.onclick = () => {
+        if (revealedState) return;
           socket.emit("selectCard", v);
           // anlık UI
           document.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
@@ -230,7 +238,6 @@ function removeAdminControls() {
   }
 };
 
-
     socket.on("joinError", ({ message }) => {
       // geri dön
       loginScreen.classList.remove("hidden");
@@ -239,43 +246,53 @@ function removeAdminControls() {
     });
 
     // players list güncelle
-    socket.on("playersUpdate", ({ players, admin }) => {
-      playersList.innerHTML = "";
+    socket.on("playersUpdate", ({ players, revealed }) => {
+  revealedState = revealed;
+  cardsDiv.classList.toggle("locked", revealedState);
+  playersList.innerHTML = "";
 
-      for (const p of players) {
-        const row = document.createElement("div");
-        row.className = "playerRow";
+  for (const p of players) {
+    const row = document.createElement("div");
+    row.className = "playerRow";
 
-        const left = document.createElement("div");
-        left.textContent = p.name;
+    const left = document.createElement("div");
+    left.textContent = p.name;
 
-        if (p.role === "admin") {
-          const badge = document.createElement("span");
-          badge.className = "adminBadge";
-          badge.textContent = "admin";
-          left.appendChild(badge);
-        }
+    if (p.role === "admin") {
+      const badge = document.createElement("span");
+      badge.className = "adminBadge";
+      badge.textContent = "admin";
+      left.appendChild(badge);
+    }
 
-        const right = document.createElement("div");
-        right.innerHTML = p.selected ? '<span class="tick">✓</span>' : "";
+    const right = document.createElement("div");
 
-        row.appendChild(left);
-        row.appendChild(right);
-        playersList.appendChild(row);
-      }
+    // reveal sonrası: ✓ yerine seçtiği kart değeri yaz
+    if (revealed) {
+    right.textContent = p.selectedCard ?? "";
+    } else {
+      right.innerHTML = p.selected ? '<span class="tick">✓</span>' : "";
+    }
 
-      // 🔥 kritik: server admin'ı başka birine vermiş olabilir (ör: admin doluyken admin seçti)
-      // Kendi rolünü, players listesinden bulup UI'ı ona göre güncelle
-      const me = players.find(x => x.name.toLowerCase() === (myName || "").toLowerCase());
-      if (me) {
-        myRole = me.role;
-        if (myRole === "admin") renderAdminControls();
-        else removeAdminControls();
-      }
-    });
+    row.appendChild(left);
+    row.appendChild(right);
+    playersList.appendChild(row);
+  }
+
+  const me = players.find(x => x.name.toLowerCase() === (myName || "").toLowerCase());
+  if (me) {
+    myRole = me.role;
+    if (myRole === "admin") renderAdminControls();
+    else removeAdminControls();
+  }
+});
+
 
     socket.on("clearSelections", () => {
-      renderCards(null);
+          revealedState = false;
+        cardsDiv.classList.remove("locked");
+        
+        renderCards(null);
       if (chart) { chart.destroy(); chart = null; }
       pieCanvas.classList.add("hidden");
     });
