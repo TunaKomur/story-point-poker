@@ -31,6 +31,36 @@
       border-radius:10px; cursor:pointer; user-select:none;
       border:2px solid transparent;
     }
+    .cardsWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* kart genişliğine göre ortalar */
+}
+.loginWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* TAM ORTALAR */
+  gap: 14px;             /* inputlar arası boşluk */
+}
+
+.loginTitle {
+  margin: 0 0 12px 0;
+  text-align: center;
+}
+
+/* input + select + button genişliği eşitlensin */
+.loginWrapper input,
+.loginWrapper select,
+.loginWrapper button {
+  width: 100%;
+  max-width: 360px;
+  box-sizing: border-box;   /* 🔥 KRİTİK SATIR */
+}
+
+.cardsTitle {
+  margin: 0 0 16px 0;    /* kartlarla araya boşluk */
+  text-align: center;
+}
     .card.selected { background:#00bcd4; }
     .controls {
         display:flex;
@@ -60,23 +90,29 @@
     <div class="main">
       <!-- LOGIN -->
       <div id="loginScreen" class="loginBox">
-        <h2 style="margin:0 0 4px 0;">Kullanıcı Adı</h2>
-        <input id="nameInput" placeholder="Kullanıcı adı:" />
+  <div class="loginWrapper">
+    <h2 class="loginTitle">Enter Username</h2>
 
-        <select id="roleSelect">
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
+    <input id="nameInput" placeholder="Username:" />
 
-        <button id="joinBtn">Katıl</button>
-        <div id="joinError" style="color:#ff5252;"></div>
-      </div>
+    <select id="roleSelect">
+      <option value="user">User</option>
+      <option value="admin">Admin</option>
+    </select>
+
+    <button id="joinBtn">Join</button>
+    <div id="joinError"></div>
+  </div>
+</div>
+
 
       <!-- GAME -->
       <div id="gameScreen" class="hidden">
-        <h2 style="margin:0;">Story Point Seç</h2>
+        <div class="cardsWrapper">
+    <h2 class="cardsTitle">Choose Story Point</h2>
+    <div class="cards" id="cards"></div>
+    </div>
 
-        <div class="cards" id="cards"></div>
 
         <!-- sadece admin görecek -->
         <div class="controls" id="adminControls"></div>
@@ -104,7 +140,7 @@
     const pieCanvas = document.getElementById("pieChart");
     let chart = null;
 
-    const cardValues = ["0","1/2","1","2","3","5","8","13","20","40","100","?"];
+    const cardValues = ["0","1/2","1","2","3","5","8","13","21","34","55","?"];
     let myName = null;
     let myRole = "user";
     let adminTaken = false;
