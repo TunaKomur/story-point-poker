@@ -9,7 +9,7 @@ const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, "public")));
 
-let users = []; 
+let users = [];
 // users: [{ id, name, role: "admin" | "user", selectedCard: null | string }]
 
 let adminSocketId = null;
@@ -68,42 +68,56 @@ io.on("connection", (socket) => {
   });
 
   socket.on("selectCard", (value) => {
-  if (revealed) return; // 🔒 reveal sonrası kilit
+    if (revealed) return; // 🔒 reveal sonrası kilit
 
-  const user = users.find(u => u.id === socket.id);
-  if (!user) return;
+    const user = users.find(u => u.id === socket.id);
+    if (!user) return;
 
-  user.selectedCard = value;
-  emitState();
-});
+    // ✅ aynı karta tekrar basarsa seçim iptal (toggle)
+    if (user.selectedCard === value) {
+      user.selectedCard = null;
+    } else {
+      user.selectedCard = value;
+    }
+    emitState();
+  });
 
   // ✅ SADECE ADMIN REVEAL ATABİLİR
   socket.on("reveal", () => {
-  if (socket.id !== adminSocketId) return;
+    if (socket.id !== adminSocketId) return;
 
-  revealed = true;
-
-  const counts = {};
-  for (const u of users) {
-    if (u.selectedCard != null) {
-      counts[u.selectedCard] = (counts[u.selectedCard] || 0) + 1;
+    // ✅ Hiç kimse kart seçmemişse REVEAL yapma
+    const anySelected = users.some(u => u.selectedCard != null);
+    if (!anySelected) {
+      io.to(socket.id).emit("revealError", {
+        message: "No estimates yet. Please select a card before revealing."
+      });
+      return; // 🔥 revealed=true olmaz, kartlar kilitlenmez
     }
-  }
 
-  io.emit("revealResults", counts);
-  emitState(); // ✅ tek yerden yayın
-});
+    revealed = true;
+
+    const counts = {};
+    for (const u of users) {
+      if (u.selectedCard != null) {
+        counts[u.selectedCard] = (counts[u.selectedCard] || 0) + 1;
+      }
+    }
+
+    io.emit("revealResults", counts);
+    emitState();
+  });
 
   // ✅ SADECE ADMIN NEW ROUND ATABİLİR
   socket.on("newRound", () => {
-  if (socket.id !== adminSocketId) return;
+    if (socket.id !== adminSocketId) return;
 
-  revealed = false;
-  for (const u of users) u.selectedCard = null;
+    revealed = false;
+    for (const u of users) u.selectedCard = null;
 
-  io.emit("clearSelections");
-  emitState(); // ✅ tek yerden yayın
-});
+    io.emit("clearSelections");
+    emitState(); // ✅ tek yerden yayın
+  });
 
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);

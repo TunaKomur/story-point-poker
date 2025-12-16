@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="tr">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -9,82 +10,170 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#2b2b2b; color:#fff; }
-    .layout { display:flex; height:100vh; }
-    .sidebar { width:260px; background:#3a3a3a; padding:18px; box-sizing:border-box; }
-    .main { flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #2b2b2b;
+      color: #fff;
+    }
 
-    .loginBox { display:flex; flex-direction:column; gap:10px; min-width:320px; }
-    input, select, button { padding:10px; border-radius:6px; border:0; outline:0; }
-    button { cursor:pointer; }
-    .hidden { display:none; }
+    .layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 260px;
+      background: #3a3a3a;
+      padding: 18px;
+      box-sizing: border-box;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .loginBox {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-width: 320px;
+    }
+
+    input,
+    select,
+    button {
+      padding: 10px;
+      border-radius: 6px;
+      border: 0;
+      outline: 0;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none;
+    }
 
     .cards {
-    display:grid;
-    grid-template-columns: repeat(6, 80px);
-    gap:10px;
-    justify-content: center;   /* ✅ kartlar ortalansın */
+      display: grid;
+      grid-template-columns: repeat(6, 80px);
+      gap: 10px;
+      justify-content: center;
+      /* ✅ kartlar ortalansın */
     }
+
     .card {
-      width:80px; height:80px; background:#4a4a4a;
-      display:flex; align-items:center; justify-content:center;
-      border-radius:10px; cursor:pointer; user-select:none;
-      border:2px solid transparent;
+      width: 80px;
+      height: 80px;
+      background: #4a4a4a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      cursor: pointer;
+      user-select: none;
+      border: 2px solid transparent;
     }
+
     .cardsWrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;   /* kart genişliğine göre ortalar */
-}
-.loginWrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;   /* TAM ORTALAR */
-  gap: 14px;             /* inputlar arası boşluk */
-}
-
-.loginTitle {
-  margin: 0 0 12px 0;
-  text-align: center;
-}
-
-/* input + select + button genişliği eşitlensin */
-.loginWrapper input,
-.loginWrapper select,
-.loginWrapper button {
-  width: 100%;
-  max-width: 360px;
-  box-sizing: border-box;   /* 🔥 KRİTİK SATIR */
-}
-
-.cards.locked .card {
-  cursor: not-allowed;
-  opacity: 0.75;
-}
-.cards.locked .card:hover {
-  filter: brightness(0.95);
-}
-
-.cardsTitle {
-  margin: 0 0 16px 0;    /* kartlarla araya boşluk */
-  text-align: center;
-}
-    .card.selected { background:#00bcd4; }
-    .controls {
-        display:flex;
-        justify-content: center;
-        gap:20px;
-        margin-top:18px;
-        width:100%;
-        max-width: calc(6 * 80px + 5 * 10px);
-        margin-left:auto;
-        margin-right:auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* kart genişliğine göre ortalar */
     }
-    .playersTitle { font-size:18px; font-weight:bold; margin-bottom:10px; }
-    .playerRow { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.15); }
-    .tick { color:#00e676; font-weight:bold; }
-    .adminBadge { font-size:12px; padding:2px 6px; background:#ff9800; border-radius:8px; margin-left:6px; }
-    canvas { max-width:520px; max-height:320px; }
+
+    .loginWrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* TAM ORTALAR */
+      gap: 14px;
+      /* inputlar arası boşluk */
+    }
+
+    .loginTitle {
+      margin: 0 0 12px 0;
+      text-align: center;
+    }
+
+    /* input + select + button genişliği eşitlensin */
+    .loginWrapper input,
+    .loginWrapper select,
+    .loginWrapper button {
+      width: 100%;
+      max-width: 360px;
+      box-sizing: border-box;
+      /* 🔥 KRİTİK SATIR */
+    }
+
+    .cards.locked .card {
+      cursor: not-allowed;
+      opacity: 0.75;
+    }
+
+    .cards.locked .card:hover {
+      filter: brightness(0.95);
+    }
+
+    .cardsTitle {
+      margin: 0 0 16px 0;
+      /* kartlarla araya boşluk */
+      text-align: center;
+    }
+
+    .card.selected {
+      background: #00bcd4;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-top: 18px;
+      width: 100%;
+      max-width: calc(6 * 80px + 5 * 10px);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .playersTitle {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .playerRow {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .tick {
+      color: #00e676;
+      font-weight: bold;
+    }
+
+    .adminBadge {
+      font-size: 12px;
+      padding: 2px 6px;
+      background: #ff9800;
+      border-radius: 8px;
+      margin-left: 6px;
+    }
+
+    canvas {
+      max-width: 520px;
+      max-height: 320px;
+    }
   </style>
 </head>
 
@@ -98,30 +187,31 @@
     <div class="main">
       <!-- LOGIN -->
       <div id="loginScreen" class="loginBox">
-  <div class="loginWrapper">
-    <h2 class="loginTitle">Enter Username</h2>
+        <div class="loginWrapper">
+          <h2 class="loginTitle">Enter Username</h2>
 
-    <input id="nameInput" placeholder="Username:" />
+          <input id="nameInput" placeholder="Username:" />
 
-    <select id="roleSelect">
-      <option value="user">User</option>
-      <option value="admin">Admin</option>
-    </select>
+          <select id="roleSelect">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+          </select>
 
-    <button id="joinBtn">Join</button>
-    <div id="joinError"></div>
-  </div>
-</div>
+          <button id="joinBtn">Join</button>
+          <div id="joinError"></div>
+        </div>
+      </div>
 
       <!-- GAME -->
       <div id="gameScreen" class="hidden">
         <div class="cardsWrapper">
-    <h2 class="cardsTitle">Choose Story Point</h2>
-    <div class="cards" id="cards"></div>
-    </div>
+          <h2 class="cardsTitle">Choose Story Point</h2>
+          <div class="cards" id="cards"></div>
+        </div>
 
         <!-- sadece admin görecek -->
         <div class="controls" id="adminControls"></div>
+        <div id="revealError" style="color:#ff5252; text-align:center; margin-top:8px;"></div>
 
         <canvas id="pieChart" width="520" height="320" class="hidden"></canvas>
       </div>
@@ -137,16 +227,15 @@
     const roleSelect = document.getElementById("roleSelect");
     const joinBtn = document.getElementById("joinBtn");
     const joinError = document.getElementById("joinError");
-
     const playersList = document.getElementById("playersList");
     const cardsDiv = document.getElementById("cards");
-
     const adminControls = document.getElementById("adminControls");
-
     const pieCanvas = document.getElementById("pieChart");
+    const revealError = document.getElementById("revealError");
+
     let chart = null;
 
-    const cardValues = ["0","1/2","1","2","3","5","8","13","21","34","55","?"];
+    const cardValues = ["0", "1/2", "1", "2", "3", "5", "8", "13", "21", "34", "55", "?"];
     let myName = null;
     let myRole = "user";
     let adminTaken = false;
@@ -160,11 +249,16 @@
         el.className = "card" + (selectedValue === v ? " selected" : "");
         el.textContent = v;
         el.onclick = () => {
-        if (revealedState) return;
+          if (revealedState) return;
+
+          const wasSelected = el.classList.contains("selected");
           socket.emit("selectCard", v);
+
           // anlık UI
           document.querySelectorAll(".card").forEach(c => c.classList.remove("selected"));
-          el.classList.add("selected");
+          if (!wasSelected) {
+            el.classList.add("selected");
+          }
         };
         cardsDiv.appendChild(el);
       }
@@ -172,31 +266,33 @@
 
     renderCards(null);
 
-
     function renderAdminControls() {
-  const adminControls = document.getElementById("adminControls");
-  if (!adminControls) return;
+      const adminControls = document.getElementById("adminControls");
+      if (!adminControls) return;
 
-  // Zaten eklenmişse çık
-  if (adminControls.querySelector("#revealBtn")) return;
+      // Zaten eklenmişse çık
+      if (adminControls.querySelector("#revealBtn")) return;
 
-  adminControls.innerHTML = `
+      adminControls.innerHTML = `
     <button id="revealBtn">REVEAL ESTIMATES</button>
-    <button id="newRoundBtn">START NEW ESTIMATION ROUND</button>
-  `;
+    <button id="newRoundBtn">START NEW ESTIMATION ROUND</button>`;
 
-  adminControls.querySelector("#revealBtn")
-    .addEventListener("click", () => socket.emit("reveal"));
+      adminControls.querySelector("#revealBtn")
+        .addEventListener("click", () => {
+          if (revealError) revealError.textContent = "";
+          socket.emit("reveal");
+        });
 
-  adminControls.querySelector("#newRoundBtn")
-    .addEventListener("click", () => socket.emit("newRound"));
-}
+      adminControls.querySelector("#newRoundBtn")
+        .addEventListener("click", () => socket.emit("newRound"));
+    }
 
-function removeAdminControls() {
-  const adminControls = document.getElementById("adminControls");
-  if (!adminControls) return;
-  adminControls.innerHTML = "";
-}
+    function removeAdminControls() {
+      const adminControls = document.getElementById("adminControls");
+      if (!adminControls) return;
+      adminControls.innerHTML = "";
+    }
+
     // admin durumu geldiğinde combobox güncelle
     socket.on("adminStatus", ({ adminTaken: taken, adminName: aName }) => {
       adminTaken = !!taken;
@@ -211,32 +307,32 @@ function removeAdminControls() {
     });
 
     joinBtn.onclick = () => {
-  joinError.textContent = "";
+      joinError.textContent = "";
 
-  const name = nameInput.value.trim();
-  const role = roleSelect.value;
+      const name = nameInput.value.trim();
+      const role = roleSelect.value;
 
-  if (!name) {
-    joinError.textContent = "İsim boş olamaz.";
-    return;
-  }
+      if (!name) {
+        joinError.textContent = "İsim boş olamaz.";
+        return;
+      }
 
-  myName = name;
-  myRole = role;
+      myName = name;
+      myRole = role;
 
-  socket.emit("join", { name, role });
+      socket.emit("join", { name, role });
 
-  loginScreen.classList.add("hidden");
-  gameScreen.classList.remove("hidden");
-  pieCanvas.classList.add("hidden");
+      loginScreen.classList.add("hidden");
+      gameScreen.classList.remove("hidden");
+      pieCanvas.classList.add("hidden");
 
-  // 🔐 KRİTİK NOKTA
-  if (myRole === "admin") {
-    renderAdminControls();
-  } else {
-    removeAdminControls();
-  }
-};
+      // 🔐 KRİTİK NOKTA
+      if (myRole === "admin") {
+        renderAdminControls();
+      } else {
+        removeAdminControls();
+      }
+    };
 
     socket.on("joinError", ({ message }) => {
       // geri dön
@@ -247,55 +343,62 @@ function removeAdminControls() {
 
     // players list güncelle
     socket.on("playersUpdate", ({ players, revealed }) => {
-  revealedState = revealed;
-  cardsDiv.classList.toggle("locked", revealedState);
-  playersList.innerHTML = "";
+      revealedState = revealed;
+      cardsDiv.classList.toggle("locked", revealedState);
+      playersList.innerHTML = "";
 
-  for (const p of players) {
-    const row = document.createElement("div");
-    row.className = "playerRow";
+      for (const p of players) {
+        const row = document.createElement("div");
+        row.className = "playerRow";
 
-    const left = document.createElement("div");
-    left.textContent = p.name;
+        const left = document.createElement("div");
+        left.textContent = p.name;
 
-    if (p.role === "admin") {
-      const badge = document.createElement("span");
-      badge.className = "adminBadge";
-      badge.textContent = "admin";
-      left.appendChild(badge);
-    }
+        if (p.role === "admin") {
+          const badge = document.createElement("span");
+          badge.className = "adminBadge";
+          badge.textContent = "admin";
+          left.appendChild(badge);
+        }
 
-    const right = document.createElement("div");
+        const right = document.createElement("div");
 
-    // reveal sonrası: ✓ yerine seçtiği kart değeri yaz
-    if (revealed) {
-    right.textContent = p.selectedCard ?? "";
-    } else {
-      right.innerHTML = p.selected ? '<span class="tick">✓</span>' : "";
-    }
+        // reveal sonrası: ✓ yerine seçtiği kart değeri yaz
+        if (revealed) {
+          right.textContent = p.selectedCard ?? "";
+        } else {
+          right.innerHTML = p.selected ? '<span class="tick">✓</span>' : "";
+        }
 
-    row.appendChild(left);
-    row.appendChild(right);
-    playersList.appendChild(row);
-  }
+        row.appendChild(left);
+        row.appendChild(right);
+        playersList.appendChild(row);
+      }
 
-  const me = players.find(x => x.name.toLowerCase() === (myName || "").toLowerCase());
-  if (me) {
-    myRole = me.role;
-    if (myRole === "admin") renderAdminControls();
-    else removeAdminControls();
-  }
-});
-
+      const me = players.find(x => x.name.toLowerCase() === (myName || "").toLowerCase());
+      if (me) {
+        renderCards(me.selectedCard); // ✅ server state ile kartları senkronla
+        myRole = me.role;
+        if (myRole === "admin") renderAdminControls();
+        else removeAdminControls();
+      }
+    });
 
     socket.on("clearSelections", () => {
-          revealedState = false;
-        cardsDiv.classList.remove("locked");
-        
-        renderCards(null);
+      if (revealError) revealError.textContent = "";
+
+      revealedState = false;
+      cardsDiv.classList.remove("locked");
+
+      renderCards(null);
       if (chart) { chart.destroy(); chart = null; }
       pieCanvas.classList.add("hidden");
     });
+
+    socket.on("revealError", ({ message }) => {
+      if (revealError) revealError.textContent = message || "";
+    });
+
 
     socket.on("revealResults", (counts) => {
       const labels = Object.keys(counts);
@@ -312,9 +415,16 @@ function removeAdminControls() {
         data: {
           labels,
           datasets: [{ data }]
+        },
+        options: {
+          plugins: {
+            tooltip: { enabled: false }
+          }
         }
       });
+
     });
   </script>
 </body>
+
 </html>
