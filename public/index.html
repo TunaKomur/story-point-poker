@@ -8,6 +8,7 @@
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
   <style>
     body {
@@ -142,6 +143,10 @@
       max-width: calc(6 * 80px + 5 * 10px);
       margin-left: auto;
       margin-right: auto;
+    }
+
+    #pieChart {
+      margin-top: 18px;
     }
 
     .playersTitle {
@@ -416,12 +421,25 @@
           labels,
           datasets: [{ data }]
         },
+        plugins: [ChartDataLabels],
         options: {
           plugins: {
-            tooltip: { enabled: false }
+            legend: { display: false }, // ✅ üstteki dikdörtgenli legend gitti
+
+            tooltip: { enabled: false }, // ✅ istersen tamamen kapalı kalsın (siyah kutucuk çıkmasın)
+
+            datalabels: {
+              color: "#fff",
+              font: { weight: "bold", size: 18 },
+              formatter: (value, context) => {
+                // ✅ dilimin içine kart değerini yazdırır (2, 13, 34 vs)
+                return context.chart.data.labels[context.dataIndex];
+              }
+            }
           }
         }
       });
+
 
     });
   </script>
