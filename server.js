@@ -16,6 +16,11 @@ let adminSocketId = null;
 let adminName = null;
 let revealed = false;
 
+function resetRound() {
+  revealed = false;
+  for (const u of users) u.selectedCard = null;
+}
+
 function emitState() {
   io.emit("playersUpdate", {
     revealed,
@@ -44,11 +49,12 @@ io.on("connection", (socket) => {
     // admin zaten varsa, admin isteğini reddet -> user'a düşür
     if (desiredRole === "admin" && adminSocketId) {
       desiredRole = "user";
+      socket.emit("roleDowngraded", { message: "Admin already taken. You joined as User." });
     }
 
     // aynı isimle tekrar giriş olmasın (istersen kaldırırız)
     if (users.some(u => u.name.toLowerCase() === cleanName.toLowerCase())) {
-      socket.emit("joinError", { message: "Bu kullanıcı adı zaten kullanılıyor." });
+      socket.emit("joinError", { message: "This username is already taken." });
       return;
     }
 
@@ -68,19 +74,22 @@ io.on("connection", (socket) => {
   });
 
   socket.on("selectCard", (value) => {
-    if (revealed) return; // 🔒 reveal sonrası kilit
+    if (revealed) return; // reveal sonrası kilit
 
     const user = users.find(u => u.id === socket.id);
     if (!user) return;
 
-    // ✅ aynı karta tekrar basarsa seçim iptal (toggle)
-    if (user.selectedCard === value) {
+    // ✅ null geldiyse seçim kaldır
+    if (value == null) {
       user.selectedCard = null;
     } else {
-      user.selectedCard = value;
+      // ✅ aynı kartı tekrar seçtiyse kaldır (ek güvenlik)
+      user.selectedCard = (user.selectedCard === value) ? null : value;
     }
+
     emitState();
   });
+
 
   // ✅ SADECE ADMIN REVEAL ATABİLİR
   socket.on("reveal", () => {
@@ -112,11 +121,10 @@ io.on("connection", (socket) => {
   socket.on("newRound", () => {
     if (socket.id !== adminSocketId) return;
 
-    revealed = false;
-    for (const u of users) u.selectedCard = null;
+    resetRound();
 
     io.emit("clearSelections");
-    emitState(); // ✅ tek yerden yayın
+    emitState();
   });
 
   socket.on("disconnect", () => {
@@ -126,10 +134,21 @@ io.on("connection", (socket) => {
     if (socket.id === adminSocketId) {
       adminSocketId = null;
       adminName = null;
+
+      // Admin çıkınca round kilitli kalmasın
+      resetRound();
+      io.emit("clearSelections");
+
       io.emit("adminStatus", { adminTaken: false, adminName: null });
     }
 
     users = users.filter(u => u.id !== socket.id);
+    // ✅ Eğer odada kimse kalmadıysa round state'ini sıfırla
+    if (users.length === 0) {
+      resetRound();
+      // ekstra güvenlik: içeride seçim kalmasın
+      // (users boş ama state temiz kalsın)
+    }
     emitState();
   });
 });
