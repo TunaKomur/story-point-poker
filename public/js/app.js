@@ -22,7 +22,8 @@
 
     let chart = null;
 
-    const cardValues = ["0", "1/2", "1", "2", "3", "5", "8", "13", "21", "34", "55", "?"];
+    //const cardValues = ["0", "1/2", "1", "2", "3", "5", "8", "13", "21", "34", "55", "?"];
+    const cardValues = ["Tuna", "Kader", "Halit", "Ali", "Anıl", "Cihan", "Selin", "Mete", "Yaren", "Arda", "Aybars", "?"];
     let myName = null;
     let myRole = "user";
     let adminTaken = false;
