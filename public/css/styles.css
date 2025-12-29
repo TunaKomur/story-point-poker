@@ -136,8 +136,8 @@ button {
 }
 
 .sidebarLogo {
-    width: 26px;
-    height: 26px;
+    width: 20px;
+    height: 20px;
     object-fit: contain;
     opacity: 0.75;
 }
