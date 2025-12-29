@@ -119,15 +119,27 @@ button {
 
 .sidebarFooter {
     font-size: 12px;
-    text-align: center;
     color: rgba(255, 255, 255, 0.45);
     padding: 12px 6px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: left; /* flex varken center'a gerek yok */
 }
 
 .sidebarFooter span {
     font-weight: 600;
     color: rgba(255, 255, 255, 0.65);
+}
+
+.sidebarLogo {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    opacity: 0.75;
 }
 
 /* =========================
