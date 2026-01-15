@@ -15,15 +15,18 @@ let users = [];
 let adminSocketId = null;
 let adminName = null;
 let revealed = false;
+let revealRequested = false; // admin reveal bastı ama herkes seçmedi
 
 function resetRound() {
   revealed = false;
+  revealRequested = false;
   for (const u of users) u.selectedCard = null;
 }
 
 function emitState() {
   io.emit("playersUpdate", {
     revealed,
+    revealRequested, // ✅ client sidebar kum saati için
     players: users.map(u => ({
       name: u.name,
       role: u.role,
@@ -87,35 +90,56 @@ io.on("connection", (socket) => {
       user.selectedCard = (user.selectedCard === value) ? null : value;
     }
 
+    // admin reveal bastıysa ve artık herkes seçtiyse pending'i kapat
+    if (revealRequested) {
+    const stillMissing = users.some(u => u.selectedCard == null);
+    if (!stillMissing) revealRequested = false;
+  }
+
     emitState();
   });
 
 
   // ✅ SADECE ADMIN REVEAL ATABİLİR
   socket.on("reveal", () => {
-    if (socket.id !== adminSocketId) return;
+  if (socket.id !== adminSocketId) return;
 
-    // ✅ Hiç kimse kart seçmemişse REVEAL yapma
-    const anySelected = users.some(u => u.selectedCard != null);
-    if (!anySelected) {
-      io.to(socket.id).emit("revealError", {
-        message: "No estimates yet. Please select a card before revealing."
+  // admin reveal'a bastı -> "pending" moduna al
+  revealRequested = true;
+
+  // kart seçmeyenler var mı?
+  const missing = users.filter(u => u.selectedCard == null);
+
+  if (missing.length > 0) {
+    // 🔥 revealed olmayacak, grafik yok
+    io.to(socket.id).emit("revealError", {
+      message: `Waiting for ${missing.length} player(s) to pick a card.`
+    });
+
+    // seçmeyen user'lara uyarı gönder
+    for (const u of missing) {
+      io.to(u.id).emit("pickCardWarning", {
+        message: "Admin revealed. Please select a card."
       });
-      return; // 🔥 revealed=true olmaz, kartlar kilitlenmez
     }
 
-    revealed = true;
+    emitState(); // sidebar kum saati güncellensin
+    return;
+  }
 
-    const counts = {};
-    for (const u of users) {
-      if (u.selectedCard != null) {
-        counts[u.selectedCard] = (counts[u.selectedCard] || 0) + 1;
-      }
-    }
+  // herkes seçtiyse artık gerçek reveal
+  revealed = true;
+  revealRequested = false;
 
-    io.emit("revealResults", counts);
-    emitState();
-  });
+  const counts = {};
+  for (const u of users) {
+    counts[u.selectedCard] = (counts[u.selectedCard] || 0) + 1;
+  }
+
+  io.emit("revealResults", counts);
+  emitState();
+});
+
 
   // ✅ SADECE ADMIN NEW ROUND ATABİLİR
   socket.on("newRound", () => {

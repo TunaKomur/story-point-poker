@@ -22,8 +22,7 @@
 
     let chart = null;
 
-    //const cardValues = ["0", "1/2", "1", "2", "3", "5", "8", "13", "21", "34", "55", "?"];
-    const cardValues = ["Tuna", "Kader", "Mete", "Ali", "Anıl", "Cihan", "Selin", "Yaren", "HalitB", "Arda", "BurakK", "?"];
+    const cardValues = ["0", "1/2", "1", "2", "3", "5", "8", "13", "21", "34", "55", "?"];
     let myName = null;
     let myRole = "user";
     let adminTaken = false;
@@ -239,7 +238,7 @@
         joinError.textContent = message || "Join error";
     });
 
-    socket.on("playersUpdate", ({ players, revealed }) => {
+    socket.on("playersUpdate", ({ players, revealed, revealRequested}) => {
         revealedState = revealed;
         cardsDiv.classList.toggle("locked", revealedState);
         playersList.innerHTML = "";
@@ -263,8 +262,14 @@
             if (revealed) {
                 right.textContent = p.selectedCard ?? "";
             } else {
-                right.innerHTML = p.selected ? '<span class="tick">✓</span>' : "";
+                if (p.selected) {
+                    right.innerHTML = '<span class="tick">✓</span>';
+                } else {
+            // admin reveal bastıysa seçmeyenlere kum saati göster
+                    right.innerHTML = revealRequested ? '<span class="hourglass">⏳</span>' : "";
+                }
             }
+
 
             row.appendChild(left);
             row.appendChild(right);
@@ -294,6 +299,11 @@
     socket.on("revealError", ({ message }) => {
         if (revealError) revealError.textContent = message || "";
     });
+
+    socket.on("pickCardWarning", ({ message }) => {
+        if (revealError) revealError.textContent = message || "Please select a card.";
+    });
+
 
     socket.on("revealResults", (counts) => {
         const labels = Object.keys(counts);
