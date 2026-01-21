@@ -4,7 +4,7 @@
     const loginScreen = document.getElementById("loginScreen");
     const gameScreen = document.getElementById("gameScreen");
     const backBtn = document.getElementById("backBtn");
-    
+
     function show(el, display = "") {
         if (!el) return;
         el.classList.remove("hidden");
@@ -34,6 +34,8 @@
     const revealError = document.getElementById("revealError");
     const chartWrap = document.getElementById("chartWrap");
     const confettiCanvas = document.getElementById("confettiCanvas");
+    const recommendedWrap = document.getElementById("recommendedWrap");
+const recommendedText = document.getElementById("recommendedText");
     const confettiCtx = confettiCanvas.getContext("2d");
 
     let chart = null;
@@ -145,6 +147,50 @@
     }
 
     renderCards(null);
+
+    function getRecommendedPointFromCounts(counts) {
+  // Sadece sayısal kartları al (0, 0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55)
+  const numericCards = cardValues
+    .map(v => ({ label: v, num: (v === "1/2") ? 0.5 : Number(v) }))
+    .filter(x => Number.isFinite(x.num)); // "?" elenir
+
+  let sum = 0;
+  let n = 0;
+
+  for (const [label, c] of Object.entries(counts || {})) {
+    const count = Number(c) || 0;
+    if (count <= 0) continue;
+
+    const num = (label === "1/2") ? 0.5 : Number(label);
+    if (!Number.isFinite(num)) continue; // "?" gibi
+
+    sum += num * count;
+    n += count;
+  }
+
+  if (n === 0) return null;
+
+  const avg = sum / n;
+
+  // Ortalamaya en yakın kartı bul (eşitlikte daha küçük kartı seçiyoruz)
+  let best = numericCards[0];
+  let bestDiff = Math.abs(best.num - avg);
+
+  for (const c of numericCards) {
+    const diff = Math.abs(c.num - avg);
+    if (diff < bestDiff || (diff === bestDiff && c.num < best.num)) {
+      best = c;
+      bestDiff = diff;
+    }
+  }
+
+  return { recommendedLabel: best.label, average: avg };
+}
+
+    function setRevealMessage(text) {
+        if (!revealError) return;
+        revealError.textContent = text || "";
+    }
 
     function renderAdminControls() {
         if (!adminControls) return;
@@ -280,28 +326,46 @@
             const row = document.createElement("div");
             row.className = "playerRow";
 
+            // SOL: isim
             const left = document.createElement("div");
+            left.className = "playerLeft";
             left.textContent = p.name;
 
+            // SAĞ: [admin badge] + [status slot]
+            const right = document.createElement("div");
+            right.className = "playerRight";
+
+            // admin badge sağ tarafta dursun
             if (p.role === "admin") {
                 const badge = document.createElement("span");
                 badge.className = "adminBadge";
                 badge.textContent = "admin";
-                left.appendChild(badge);
+                right.appendChild(badge);
             }
 
-            const right = document.createElement("div");
+            // status slot: ✓ / ⏳ / (boş ama yer kaplar)
+            const statusSlot = document.createElement("span");
+            statusSlot.className = "statusSlot";
 
             if (revealed) {
-                right.textContent = p.selectedCard ?? "";
+                // reveal sonrası sayı gösterilecekse burada gösterelim
+                // (istersen burada da slot sabit kalsın diye aynı slotta gösteriyoruz)
+                statusSlot.textContent = p.selectedCard ?? "";
             } else {
                 if (p.selected) {
-                    right.innerHTML = '<span class="tick">✓</span>';
+                    statusSlot.innerHTML = '<span class="tick">✓</span>';
+                    statusSlot.style.visibility = "visible";
+                } else if (revealRequested) {
+                    statusSlot.innerHTML = '<span class="hourglass">⏳</span>';
+                    statusSlot.style.visibility = "visible";
                 } else {
-                    // admin reveal bastıysa seçmeyenlere kum saati göster
-                    right.innerHTML = revealRequested ? '<span class="hourglass">⏳</span>' : "";
+                    // hiçbir şey yok ama yerini KORU (kayma bitiyor)
+                    statusSlot.textContent = "✓";
+                    statusSlot.style.visibility = "hidden";
                 }
             }
+
+            right.appendChild(statusSlot);
 
             row.appendChild(left);
             row.appendChild(right);
@@ -309,6 +373,8 @@
         }
 
         const me = players.find(x => x.name.toLowerCase() === (myName || "").toLowerCase());
+        const missingCount = players.filter(p => !p.selectedCard).length;
+
         if (me) {
             backBtn.classList.remove("hidden"); // artık sadece oyun ekranı gerçekten aktifken görünür
             renderCards(me.selectedCard);
@@ -319,11 +385,31 @@
 
                 // Reveal butonu: admin kart seçmediyse disabled, seçtiyse aktif
                 if (!revealedState) {
+
                     const revealBtn = document.getElementById("revealBtn");
                     if (revealBtn) revealBtn.disabled = !me.selectedCard;
                 }
+                // Admin: reveal basıldıysa "Waiting for X" dinamik güncellensin
+                if (!revealedState && revealRequested) {
+                    setRevealMessage(`Waiting for ${missingCount} player(s) to pick a card.`);
+                } else {
+                    // waiting mesajı varsa temizle
+                    if (revealError && revealError.textContent.startsWith("Waiting for")) {
+                        setRevealMessage("");
+                    }
+                }
             } else {
                 removeAdminControls();
+
+                // User: admin reveal bastıysa ve ben seçmediysem uyarı göster
+                if (!revealedState && revealRequested && !me.selectedCard) {
+                    setRevealMessage("Admin revealed. Please select a card.");
+                } else {
+                    // Kart seçtiysem uyarı silinsin
+                    if (revealError && revealError.textContent.includes("Admin revealed")) {
+                        setRevealMessage("");
+                    }
+                }
             }
         }
     });
@@ -337,6 +423,9 @@
         renderCards(null);
         if (chart) { chart.destroy(); chart = null; }
         chartWrap.classList.add("hidden");
+
+        if (recommendedWrap) recommendedWrap.classList.add("hidden");
+if (recommendedText) recommendedText.textContent = "";
     });
 
     socket.on("revealError", ({ message }) => {
@@ -344,9 +433,8 @@
     });
 
     socket.on("pickCardWarning", ({ message }) => {
-        if (revealError) revealError.textContent = message || "Please select a card.";
+        setRevealMessage(message || "Admin revealed. Please select a card.");
     });
-
 
     socket.on("revealResults", (counts) => {
         const labels = Object.keys(counts);
@@ -355,6 +443,15 @@
         if (!labels.length) return;
 
         chartWrap.classList.remove("hidden");
+
+        // ✅ Recommended Point hesapla ve göster
+const rec = getRecommendedPointFromCounts(counts);
+if (rec && recommendedWrap && recommendedText) {
+  recommendedWrap.classList.remove("hidden");
+  recommendedText.textContent = `Recommended point = ${rec.recommendedLabel}`;
+} else if (recommendedWrap) {
+  recommendedWrap.classList.add("hidden");
+}
 
         if (labels.length === 1 && data[0] > 0) {
             runConfetti(2500);
