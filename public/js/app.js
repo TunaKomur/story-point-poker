@@ -35,7 +35,7 @@
     const chartWrap = document.getElementById("chartWrap");
     const confettiCanvas = document.getElementById("confettiCanvas");
     const recommendedWrap = document.getElementById("recommendedWrap");
-const recommendedText = document.getElementById("recommendedText");
+    const recommendedText = document.getElementById("recommendedText");
     const confettiCtx = confettiCanvas.getContext("2d");
 
     let chart = null;
@@ -149,43 +149,43 @@ const recommendedText = document.getElementById("recommendedText");
     renderCards(null);
 
     function getRecommendedPointFromCounts(counts) {
-  // Sadece sayısal kartları al (0, 0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55)
-  const numericCards = cardValues
-    .map(v => ({ label: v, num: (v === "1/2") ? 0.5 : Number(v) }))
-    .filter(x => Number.isFinite(x.num)); // "?" elenir
+        // Sadece sayısal kartları al (0, 0.5, 1, 2, 3, 5, 8, 13, 21, 34, 55)
+        const numericCards = cardValues
+            .map(v => ({ label: v, num: (v === "1/2") ? 0.5 : Number(v) }))
+            .filter(x => Number.isFinite(x.num)); // "?" elenir
 
-  let sum = 0;
-  let n = 0;
+        let sum = 0;
+        let n = 0;
 
-  for (const [label, c] of Object.entries(counts || {})) {
-    const count = Number(c) || 0;
-    if (count <= 0) continue;
+        for (const [label, c] of Object.entries(counts || {})) {
+            const count = Number(c) || 0;
+            if (count <= 0) continue;
 
-    const num = (label === "1/2") ? 0.5 : Number(label);
-    if (!Number.isFinite(num)) continue; // "?" gibi
+            const num = (label === "1/2") ? 0.5 : Number(label);
+            if (!Number.isFinite(num)) continue; // "?" gibi
 
-    sum += num * count;
-    n += count;
-  }
+            sum += num * count;
+            n += count;
+        }
 
-  if (n === 0) return null;
+        if (n === 0) return null;
 
-  const avg = sum / n;
+        const avg = sum / n;
 
-  // Ortalamaya en yakın kartı bul (eşitlikte daha küçük kartı seçiyoruz)
-  let best = numericCards[0];
-  let bestDiff = Math.abs(best.num - avg);
+        // Ortalamaya en yakın kartı bul (eşitlikte daha küçük kartı seçiyoruz)
+        let best = numericCards[0];
+        let bestDiff = Math.abs(best.num - avg);
 
-  for (const c of numericCards) {
-    const diff = Math.abs(c.num - avg);
-    if (diff < bestDiff || (diff === bestDiff && c.num < best.num)) {
-      best = c;
-      bestDiff = diff;
+        for (const c of numericCards) {
+            const diff = Math.abs(c.num - avg);
+            if (diff < bestDiff || (diff === bestDiff && c.num < best.num)) {
+                best = c;
+                bestDiff = diff;
+            }
+        }
+
+        return { recommendedLabel: best.label, average: avg };
     }
-  }
-
-  return { recommendedLabel: best.label, average: avg };
-}
 
     function setRevealMessage(text) {
         if (!revealError) return;
@@ -425,7 +425,7 @@ const recommendedText = document.getElementById("recommendedText");
         chartWrap.classList.add("hidden");
 
         if (recommendedWrap) recommendedWrap.classList.add("hidden");
-if (recommendedText) recommendedText.textContent = "";
+        if (recommendedText) recommendedText.textContent = "";
     });
 
     socket.on("revealError", ({ message }) => {
@@ -444,14 +444,14 @@ if (recommendedText) recommendedText.textContent = "";
 
         chartWrap.classList.remove("hidden");
 
-        // ✅ Recommended Point hesapla ve göster
-const rec = getRecommendedPointFromCounts(counts);
-if (rec && recommendedWrap && recommendedText) {
-  recommendedWrap.classList.remove("hidden");
-  recommendedText.textContent = `Recommended point = ${rec.recommendedLabel}`;
-} else if (recommendedWrap) {
-  recommendedWrap.classList.add("hidden");
-}
+        // Recommended Point hesapla ve göster
+        const rec = getRecommendedPointFromCounts(counts);
+        if (rec && recommendedWrap && recommendedText) {
+            recommendedWrap.classList.remove("hidden");
+            recommendedText.textContent = `Recommended point = ${rec.recommendedLabel}`;
+        } else if (recommendedWrap) {
+            recommendedWrap.classList.add("hidden");
+        }
 
         if (labels.length === 1 && data[0] > 0) {
             runConfetti(2500);

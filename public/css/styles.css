@@ -395,7 +395,8 @@ button {
    Chart + Confetti
 ========================= */
 #pieChart {
-  margin-top: 0; /* veya bu bloğu tamamen silebilirsin */
+  margin-top: 0;
+  /* veya bu bloğu tamamen silebilirsin */
 }
 
 .chartWrap {
@@ -403,7 +404,8 @@ button {
   width: 520px;
   height: 320px;
 
-  margin-top: 18px;   /* ✅ Buton → Grafik aralığı */
+  margin-top: 18px;
+  /* Buton → Grafik aralığı */
 }
 
 #pieChart,
@@ -411,7 +413,8 @@ button {
   position: absolute;
   top: 0;
   left: 50%;
-  transform: translateX(-50%); /* ✅ Tam ortalar */
+  transform: translateX(-50%);
+  /* Tam ortalar */
 }
 
 #confettiCanvas {
@@ -478,32 +481,38 @@ canvas {
 
   /* Her oyuncu "pill" gibi görünsün */
   .playerRow {
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-bottom: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-bottom: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
 
-  /* ✅ kutuyu gereksiz uzatma */
-  min-width: 0;            /* max-content'i iptal */
-  width: fit-content;      /* içeriğe göre küçül */
-  max-width: 90%;          /* çok uzun isimde ekranı taşırmasın */
-}
+    /* kutuyu gereksiz uzatma */
+    min-width: 0;
+    /* max-content'i iptal */
+    width: fit-content;
+    /* içeriğe göre küçül */
+    max-width: 90%;
+    /* çok uzun isimde ekranı taşırmasın */
+  }
 
-.playerLeft {
-  min-width: 0;          /* ✅ ellipsis için şart */
-  max-width: 160px;      /* ✅ pill aşırı uzamasın (istersen 140-180 arası oynarız) */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+  .playerLeft {
+    min-width: 0;
+    /* ellipsis için şart */
+    max-width: 160px;
+    /* pill aşırı uzamasın (istersen 140-180 arası oynarız) */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.playerRight {
-  min-width: 0;
-  flex: 0 0 auto; /* sağ taraf içerik kadar */
-}
+  .playerRight {
+    min-width: 0;
+    flex: 0 0 auto;
+    /* sağ taraf içerik kadar */
+  }
 
   /* Sağdaki tick/saat daha net */
   .tick,
@@ -533,24 +542,28 @@ canvas {
   }
 
   /* Kartlar: telefonda otomatik sığacak şekilde */
-  /* ✅ Telefon dikey: kart boyutu SABİT kalsın */
-.cards {
-  --card: 104px; /* burası kartların "büyük" sabit hali — gerekirse 96/104/112 oynarız */
+  /* Telefon dikey: kart boyutu SABİT kalsın */
+  .cards {
+    --card: 104px;
+    /* burası kartların "büyük" sabit hali — gerekirse 96/104/112 oynarız */
 
-  grid-template-columns: repeat(3, var(--card));
-  justify-content: center;   /* grid ortalansın */
-  width: 100%;
-  max-width: 520px;
-  gap: 12px;                 /* biraz daha ferah görünür */
-}
+    grid-template-columns: repeat(3, var(--card));
+    justify-content: center;
+    /* grid ortalansın */
+    width: 100%;
+    max-width: 520px;
+    gap: 12px;
+    /* biraz daha ferah görünür */
+  }
 
-.card {
-  width: var(--card);
-  height: var(--card);
-  aspect-ratio: auto;        /* ✅ artık aspect-ratio ile esnemesin */
-  font-size: 18px;
-  border-radius: 14px;
-}
+  .card {
+    width: var(--card);
+    height: var(--card);
+    aspect-ratio: auto;
+    /* artık aspect-ratio ile esnemesin */
+    font-size: 18px;
+    border-radius: 14px;
+  }
 
   /* Admin butonları alt alta/yan yana sığsın */
   .controls {
@@ -570,7 +583,8 @@ canvas {
   .chartWrap {
     width: 100%;
     max-width: 520px;
-      margin-top: 18px;     /* ✅ Mobilde de buton-grafik boşluğu sabit */
+    margin-top: 18px;
+    /* Mobilde de buton-grafik boşluğu sabit */
     margin-bottom: 20px;
     height: auto;
     aspect-ratio: 520 / 320;
@@ -613,7 +627,7 @@ canvas {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    /* ✅ footer arkasına taşmayı engeller */
+    /* footer arkasına taşmayı engeller */
   }
 
   /* Sadece oyuncu listesi kayacak */
@@ -707,7 +721,7 @@ canvas {
 
 .recommendedText {
   background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   padding: 10px 16px;
   border-radius: 14px;
   backdrop-filter: blur(8px);
