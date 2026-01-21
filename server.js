@@ -26,15 +26,39 @@ function resetRound() {
 function emitState() {
   io.emit("playersUpdate", {
     revealed,
-    revealRequested, // ✅ client sidebar kum saati için
+    revealRequested, // client sidebar kum saati için
     players: users.map(u => ({
       name: u.name,
       role: u.role,
-      selected: !!u.selectedCard,           // ✅ tick için
-      selectedCard: u.selectedCard || null  // ✅ reveal sonrası sayı için
+      selected: !!u.selectedCard,           // tick için
+      selectedCard: u.selectedCard || null  // reveal sonrası sayı için
     })),
     admin: adminName ? { name: adminName } : null
   });
+}
+
+function removeUser(socketId) {
+  const wasAdmin = socketId === adminSocketId;
+
+  // kullanıcıyı listeden sil
+  users = users.filter(u => u.id !== socketId);
+
+  // admin ise adminliği düşür + round reset
+  if (wasAdmin) {
+    adminSocketId = null;
+    adminName = null;
+
+    resetRound();
+    io.emit("clearSelections");
+    io.emit("adminStatus", { adminTaken: false, adminName: null });
+  }
+
+  // kimse kalmadıysa round reset
+  if (users.length === 0) {
+    resetRound();
+  }
+
+  emitState();
 }
 
 io.on("connection", (socket) => {
@@ -82,99 +106,76 @@ io.on("connection", (socket) => {
     const user = users.find(u => u.id === socket.id);
     if (!user) return;
 
-    // ✅ null geldiyse seçim kaldır
+    // null geldiyse seçim kaldır
     if (value == null) {
       user.selectedCard = null;
     } else {
-      // ✅ aynı kartı tekrar seçtiyse kaldır (ek güvenlik)
+      // aynı kartı tekrar seçtiyse kaldır (ek güvenlik)
       user.selectedCard = (user.selectedCard === value) ? null : value;
     }
 
     // admin reveal bastıysa ve artık herkes seçtiyse pending'i kapat
     if (revealRequested) {
-    const stillMissing = users.some(u => u.selectedCard == null);
-    if (!stillMissing) revealRequested = false;
-  }
+      const stillMissing = users.some(u => u.selectedCard == null);
+      if (!stillMissing) revealRequested = false;
+    }
 
     emitState();
   });
 
+  socket.on("leaveRoom", () => removeUser(socket.id));
 
-  // ✅ SADECE ADMIN REVEAL ATABİLİR
+  // SADECE ADMIN REVEAL ATABİLİR
   socket.on("reveal", () => {
-  if (socket.id !== adminSocketId) return;
+    if (socket.id !== adminSocketId) return;
 
-  // admin reveal'a bastı -> "pending" moduna al
-  revealRequested = true;
+    // admin reveal'a bastı -> "pending" moduna al
+    revealRequested = true;
 
-  // kart seçmeyenler var mı?
-  const missing = users.filter(u => u.selectedCard == null);
+    // kart seçmeyenler var mı?
+    const missing = users.filter(u => u.selectedCard == null);
 
-  if (missing.length > 0) {
-    // 🔥 revealed olmayacak, grafik yok
-    io.to(socket.id).emit("revealError", {
-      message: `Waiting for ${missing.length} player(s) to pick a card.`
-    });
-
-    // seçmeyen user'lara uyarı gönder
-    for (const u of missing) {
-      io.to(u.id).emit("pickCardWarning", {
-        message: "Admin revealed. Please select a card."
+    if (missing.length > 0) {
+      // revealed olmayacak, grafik yok
+      io.to(socket.id).emit("revealError", {
+        message: `Waiting for ${missing.length} player(s) to pick a card.`
       });
+
+      // seçmeyen user'lara uyarı gönder
+      for (const u of missing) {
+        io.to(u.id).emit("pickCardWarning", {
+          message: "Admin revealed. Please select a card."
+        });
+      }
+
+      emitState(); // sidebar kum saati güncellensin
+      return;
     }
 
-    emitState(); // sidebar kum saati güncellensin
-    return;
-  }
+    // herkes seçtiyse artık gerçek reveal
+    revealed = true;
+    revealRequested = false;
 
-  // herkes seçtiyse artık gerçek reveal
-  revealed = true;
-  revealRequested = false;
+    const counts = {};
+    for (const u of users) {
+      counts[u.selectedCard] = (counts[u.selectedCard] || 0) + 1;
+    }
 
-  const counts = {};
-  for (const u of users) {
-    counts[u.selectedCard] = (counts[u.selectedCard] || 0) + 1;
-  }
+    io.emit("revealResults", counts);
+    emitState();
+  });
 
-  io.emit("revealResults", counts);
-  emitState();
-});
-
-
-  // ✅ SADECE ADMIN NEW ROUND ATABİLİR
+  // SADECE ADMIN NEW ROUND ATABİLİR
   socket.on("newRound", () => {
     if (socket.id !== adminSocketId) return;
 
     resetRound();
-
     io.emit("clearSelections");
+
     emitState();
   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-
-    // admin çıktıysa admin boşalır
-    if (socket.id === adminSocketId) {
-      adminSocketId = null;
-      adminName = null;
-
-      // Admin çıkınca round kilitli kalmasın
-      resetRound();
-      io.emit("clearSelections");
-
-      io.emit("adminStatus", { adminTaken: false, adminName: null });
-    }
-
-    users = users.filter(u => u.id !== socket.id);
-    // ✅ Eğer odada kimse kalmadıysa round state'ini sıfırla
-    if (users.length === 0) {
-      resetRound();
-      // ekstra güvenlik: içeride seçim kalmasın
-      // (users boş ama state temiz kalsın)
-    }
-    emitState();
-  });
+  socket.on("disconnect", () => removeUser(socket.id));
 });
 
 const PORT = process.env.PORT || 3000;

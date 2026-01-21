@@ -3,9 +3,25 @@
 
     const loginScreen = document.getElementById("loginScreen");
     const gameScreen = document.getElementById("gameScreen");
-    // İlk açılış görünürlüğü (garanti)
-    loginScreen.style.display = "flex";
-    gameScreen.style.display = "none";
+    const backBtn = document.getElementById("backBtn");
+    
+    function show(el, display = "") {
+        if (!el) return;
+        el.classList.remove("hidden");
+        if (display) el.style.display = display;
+        else el.style.removeProperty("display");
+    }
+
+    function hide(el) {
+        if (!el) return;
+        el.classList.add("hidden");
+        el.style.display = "none";
+    }
+
+    show(loginScreen, "flex");
+    hide(gameScreen);
+    backBtn.classList.add("hidden"); // login/join ekranında asla görünmesin
+
     const nameInput = document.getElementById("nameInput");
     const userRoleBtn = document.getElementById("userRoleBtn");
     const adminRoleBtn = document.getElementById("adminRoleBtn");
@@ -106,7 +122,6 @@
                 confettiCtx.clearRect(0, 0, w, h);
             }
         }
-
         requestAnimationFrame(frame);
     }
 
@@ -125,8 +140,6 @@
                 // UI'ı burada elle değiştirmiyoruz.
                 // Server'dan playersUpdate gelince renderCards tekrar çizip doğru seçimi gösterecek.
             };
-
-
             cardsDiv.appendChild(el);
         }
     }
@@ -134,29 +147,31 @@
     renderCards(null);
 
     function renderAdminControls() {
-        const adminControlsEl = document.getElementById("adminControls");
-        if (!adminControlsEl) return;
+        if (!adminControls) return;
 
-        if (adminControlsEl.querySelector("#revealBtn")) return;
+        if (!revealedState) {
+            adminControls.innerHTML = `<button id="revealBtn" disabled>REVEAL ESTIMATES</button>`;
 
-        adminControlsEl.innerHTML = `
-      <button id="revealBtn">REVEAL ESTIMATES</button>
-      <button id="newRoundBtn">START NEW ESTIMATION ROUND</button>`;
+            const btn = adminControls.querySelector("#revealBtn");
+            if (btn) {
+                btn.onclick = () => {
+                    if (revealError) revealError.textContent = "";
+                    socket.emit("reveal");
+                };
+            }
+        } else {
+            adminControls.innerHTML = `<button id="newRoundBtn">START NEW ESTIMATION ROUND</button>`;
 
-        adminControlsEl.querySelector("#revealBtn")
-            .addEventListener("click", () => {
-                if (revealError) revealError.textContent = "";
-                socket.emit("reveal");
-            });
-
-        adminControlsEl.querySelector("#newRoundBtn")
-            .addEventListener("click", () => socket.emit("newRound"));
+            const btn = adminControls.querySelector("#newRoundBtn");
+            if (btn) {
+                btn.onclick = () => socket.emit("newRound");
+            }
+        }
     }
 
     function removeAdminControls() {
-        const adminControlsEl = document.getElementById("adminControls");
-        if (!adminControlsEl) return;
-        adminControlsEl.innerHTML = "";
+        if (!adminControls) return;
+        adminControls.innerHTML = "";
     }
 
     function setRole(role) {
@@ -211,34 +226,52 @@
 
         socket.emit("join", { name, role });
 
-        // Login ekranını tamamen kapat (garanti)
-        loginScreen.classList.add("hidden");
-        loginScreen.style.display = "none";
+        hide(loginScreen);
+        show(gameScreen, "block");
 
-        // Game ekranını aç
-        gameScreen.classList.remove("hidden");
-        gameScreen.style.display = "block";
-
-        if (myRole === "admin") {
-            renderAdminControls();
-        } else {
-            removeAdminControls();
-        }
+        //backBtn.classList.remove("hidden");
     };
 
-    socket.on("joinError", ({ message }) => {
-        // Login ekranını geri aç
-        loginScreen.classList.remove("hidden");
-        loginScreen.style.display = "flex";
+    function goBackToLogin() {
+        // server'a "ben çıktım" de (birazdan server.js'e event ekleyeceğiz)
+        socket.emit("leaveRoom");
 
-        // Game ekranını kapat
-        gameScreen.classList.add("hidden");
-        gameScreen.style.display = "none";
+        hide(gameScreen);
+        show(loginScreen, "flex");
+
+        // back butonunu sakla
+        backBtn.classList.add("hidden");
+
+        // hata mesajlarını temizle
+        joinError.textContent = "";
+        if (revealError) revealError.textContent = "";
+
+        // chart temizle
+        if (chart) { chart.destroy(); chart = null; }
+        chartWrap.classList.add("hidden");
+
+        // kart kilidini kaldır + seçimleri sıfırla
+        revealedState = false;
+        cardsDiv.classList.remove("locked");
+        renderCards(null);
+
+        // local user bilgilerini sıfırla
+        myName = null;
+        myRole = "user";
+        setRole("user");
+    }
+    backBtn.addEventListener("click", goBackToLogin);
+
+    socket.on("joinError", ({ message }) => {
+        show(loginScreen, "flex");
+        hide(gameScreen);
+
+        backBtn.classList.add("hidden");
 
         joinError.textContent = message || "Join error";
     });
 
-    socket.on("playersUpdate", ({ players, revealed, revealRequested}) => {
+    socket.on("playersUpdate", ({ players, revealed, revealRequested }) => {
         revealedState = revealed;
         cardsDiv.classList.toggle("locked", revealedState);
         playersList.innerHTML = "";
@@ -265,11 +298,10 @@
                 if (p.selected) {
                     right.innerHTML = '<span class="tick">✓</span>';
                 } else {
-            // admin reveal bastıysa seçmeyenlere kum saati göster
+                    // admin reveal bastıysa seçmeyenlere kum saati göster
                     right.innerHTML = revealRequested ? '<span class="hourglass">⏳</span>' : "";
                 }
             }
-
 
             row.appendChild(left);
             row.appendChild(right);
@@ -278,10 +310,21 @@
 
         const me = players.find(x => x.name.toLowerCase() === (myName || "").toLowerCase());
         if (me) {
+            backBtn.classList.remove("hidden"); // artık sadece oyun ekranı gerçekten aktifken görünür
             renderCards(me.selectedCard);
             myRole = me.role;
-            if (myRole === "admin") renderAdminControls();
-            else removeAdminControls();
+
+            if (myRole === "admin") {
+                renderAdminControls();
+
+                // Reveal butonu: admin kart seçmediyse disabled, seçtiyse aktif
+                if (!revealedState) {
+                    const revealBtn = document.getElementById("revealBtn");
+                    if (revealBtn) revealBtn.disabled = !me.selectedCard;
+                }
+            } else {
+                removeAdminControls();
+            }
         }
     });
 
